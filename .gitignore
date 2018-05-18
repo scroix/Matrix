@@ -1,4 +1,6 @@
-Firmware/MAIN/build-teensy31/
+Firmware/MAIN/build-teensy31/*
+Software/openFrameworks/bin/*
+Software/openFrameworks/obj/*
 openFrameworks/openFrameworks.xcodeproj/xcuserdata
 openFrameworks/openFrameworks.xcodeproj/xcuserdata/antoine.xcuserdatad
 openFrameworks/openFrameworks.xcodeproj/xcuserdata/antoine.xcuserdatad/xcschemes
