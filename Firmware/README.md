@@ -1,68 +1,71 @@
-# eTextile-matrix-sensor / Blob tracking / Arduino
+# E256 eTextile-matrix-sensor / ESP8266
 
 ### Transforming textiles into an intuitive way to interact with computers. This project is part of an electronic textiles research on HCI gesture interaction that was started in 2005.
 
 ## Requirements
-- Teensy 3.1-3.2
-- E256 shield
-- Arduino IDE additional board
-  - Teensyduino: https://www.pjrc.com/teensy/teensyduino.html
+- E256 brekout board
+- ESP8266 (D1 MINI)
+- Arduino IDE additional hardware
+  - ESP8266:
 - Arduino IDE additional library
-  - SPI: https://www.pjrc.com/teensy/td_libs_SPI.html (Hardware)
-  - ADC: https://github.com/pedvide/ADC (include in Teensyduino)
   - OSC: https://github.com/CNMAT/OSC (Installed with Arduino library manager)
 
-### Settings for Arduino IDE
-- Board:       Teensy 3.1-3.2
-- USB Type:    Serial
-- CPU speed    120 Mhz (overclock)
-- Optimize     Fastest
+### Setting up Arduino IDE
+To be able to use Arduino IDE with ESP8266 MCU add this web link to to "File > Preferences > Additional Boards Manager > URLs: http://arduino.esp8266.com/stable/package_esp8266com_index.json
+Open Boards Manager from Tools > Board > Boards Manager, and type ESP8266
 
-### Settings for Arduino-mk
+Under Linux : add UDEV rules to /etc/udev/init.d/
+
+- Board:       	ESP8266
+- CPU frequency 160 MHz
+- Uplode speed  230400
+
+### Setting up Arduino-mk
     sudo apt-get install arduino-mk
     git clone https://github.com/sudar/Arduino-Makefile.git
 
 ## Program Synopsis
-- Teensy and E256 brekout communicate via SPI (Hardware).
-- The Arduio sketch implemant rows and columns scaning algorithm with synchronous **dual ADC sampling**.
+- E256 brekout board communicate with ESP8266 via SPI (Hardware).
+- The Arduio sketch implemant rows and columns scaning algorithm.
   - COLS = Two 8_Bits shift registers connected directly to the matrix columns.
   - ROWS = One 8_Bits shift register connected to two analog multiplexers that sens the matrix rows.
 - The 16x16 Analog sensors values are interpolated into 64x64 with a bilinear algorithm.
 - The blob tracking algorithm (connected component labeling) is applyed onto the interpolated matrix.
 - Each blob are tracked with persistent ID (this is done with linked list implementation).
-- The blobs coordinates, size and presure are transmit via SLIP-OSC communication protocol.
+- The blobs coordinates, size and presure are transmited via OSC communication protocol.
 
-## SLIP-OSC data paket
+## OSC data paket
 ### on_touch_pressed
-    UID (percistant blob ID)
-    centroid.X (X coordinate of the blob - from 0 to 64)
-    centroid.Y (Y coordinate of the blob - from 0 to 64)
-    box.W (bounding box Width)
-    box.H (bounding box Height)
-    box.D (bounding box depth - the maximum pressur value in all the blob pixels - from 0 to 255)
-    //pixels (the number of sensors that are triggered by a touch multiply by the interpolation factor)
+- [0-255]	UID		   // Percistant blob ID
+- [1]		alive	   //  
+- [0-64]	centroid.X // X blob centroid coordinate
+- [0-64]	centroid.Y // Y blob centroid coordinate
+- [0-255]	box.W 	   // Bounding box Width
+- [0-255]	box.H 	   // Bounding box Height
+- [0-255]	box.D 	   // Bounding box depth
 
 ### on_touch_release // FIXME or not ?
-    UID (percistant blob ID)
-    -1 (centroid.X)
-    -1 (centroid.Y)
-    -1 (box.W)
-    -1 (box.H)
-    -1 (box.D)
+- [0-255]	UID		   // Percistant blob ID
+- [0]		alive	   // 
+- [0-64]	centroid.X // X blob centroid coordinate
+- [0-64]	centroid.Y // Y blob centroid coordinate
+- [0-255]	box.W 	   // Bounding box Width
+- [0-255]	box.H 	   // Bounding box Height
+- [0-255]	box.D 	   // Bounding box depth
 
 ## E256 & Teensy pins
 Control pins to send values to the 8-BITs shift registers used on the E-256 PCB
 
-| Teensy PIN (3.1-3.2) | E256 PIN | E256 components                                      |
-| -------------------- | -------- | ---------------------------------------------------- |
-| ADC_3                | AN1      | OUTPUT of an analog multiplexer 8:1                  |
-| GND                  | GND      | Ground                                               |
-| D13 (SPI:SCK)        | SCK      | 74HC595 clock pin (SH_CP)                            |
-| ADC_9                | AN0      | OUTPUT of an analog multiplexer 8:1                  |
-| Vin                  | VCC      | 3.6 - 5V                                             |
-| D11 (SPI:MOSI)       | DS       | Data input of the first 8-BIT shift register 74HC595 |
-| D10 (SPI:SS)         | RCK      | Latch pin of the first 74HC595 (ST_CP)               |
-| GND                  | GND      | Ground                                               |
+| ESP8266 PINS         | E256 PINS | E256 components                                      |
+| -------------------- | --------- | ---------------------------------------------------- |
+| ADC_3                | AN1       | OUTPUT of an analog multiplexer 8:1                  |
+| GND                  | GND       | Ground                                               |
+| D13 (SPI:SCK)        | SCK       | 74HC595 clock pin (SH_CP)                            |
+| ADC_9                | AN0       | OUTPUT of an analog multiplexer 8:1                  |
+| Vin                  | VCC       | 3.6 - 5V                                             |
+| D11 (SPI:MOSI)       | DS        | Data input of the first 8-BIT shift register 74HC595 |
+| D10 (SPI:SS)         | RCK       | Latch pin of the first 74HC595 (ST_CP)               |
+| GND                  | GND       | Ground                                               |
 
 ## Copyright
 Except as otherwise noted, all files in the resistiveMatrix project folder
@@ -156,11 +159,21 @@ Thanks to Vincent Roudaut, Hannah Perner Willson, Cedric Honnet, Antoine Meisso,
     COL_7 -> Q0 : 00000001 -> HEX 0x1
 
 ### Byte_C
-    ROW_0 & ROW_8  -> Y5 : 0101 0101 -> HEX 0x55
-    ROW_1 & ROW_9  -> Y7 : 0111 0111 -> HEX 0x77
-    ROW_2 & ROW_10 -> Y6 : 0110 0110 -> HEX 0x66
-    ROW_3 & ROW_11 -> Y4 : 0100 0100 -> HEX 0x44
-    ROW_4 & ROW_12 -> Y2 : 0010 0010 -> HEX 0x22
-    ROW_5 & ROW_13 -> Y1 : 0001 0001 -> HEX 0x11
-    ROW_6 & ROW_14 -> Y0 : 0000 0000 -> HEX 0x00
-    ROW_7 & ROW_15 -> Y3 : 0011 0011 -> HEX 0x33
+    ROW_0 -> Y5 : 0101 1000 -> HEX 0x58
+    ROW_1 -> Y7 : 0111 1000 -> HEX 0x78
+    ROW_2 -> Y6 : 0110 1000 -> HEX 0x68
+    ROW_3 -> Y4 : 0100 1000 -> HEX 0x48
+    ROW_4 -> Y2 : 0010 1000 -> HEX 0x28
+    ROW_5 -> Y1 : 0001 1000 -> HEX 0x18
+    ROW_6 -> Y0 : 0000 1000 -> HEX 0x8
+    ROW_7 -> Y3 : 0011 1000 -> HEX 0x38
+
+    ROW_8 -> Y5  : 1000 0101 -> HEX 0x85
+    ROW_9 -> Y7  : 1000 0111 -> HEX 0x87
+    ROW_10 -> Y6 : 1000 0110 -> HEX 0x86
+    ROW_11 -> Y4 : 1000 0100 -> HEX 0x84
+    ROW_12 -> Y2 : 1000 0010 -> HEX 0x82
+    ROW_13 -> Y1 : 1000 0001 -> HEX 0x81
+    ROW_14 -> Y0 : 1000 0000 -> HEX 0x80
+    ROW_15 -> Y3 : 1000 0011 -> HEX 0x83
+

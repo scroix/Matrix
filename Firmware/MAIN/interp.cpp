@@ -61,6 +61,7 @@ void bilinear_interp(const image_t *outputFrame, const image_t* inputFrame, cons
       }
     }
   }
+  
 #ifdef DEBUG_INTERP
   for (uint16_t i = 0; i < NEW_FRAME; i++) {
     if ((i % outputFrame->numCols) == (outputFrame->numCols - 1)) Serial.println();
@@ -70,4 +71,5 @@ void bilinear_interp(const image_t *outputFrame, const image_t* inputFrame, cons
   Serial.println();
   delay(500);
 #endif /*__DEBUG_INTERP__*/
+
 }

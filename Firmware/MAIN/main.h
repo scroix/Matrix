@@ -7,6 +7,15 @@
 #ifndef __MAIN_H__
 #define __MAIN_H__
 
+#include <SPI.h>
+
+#include <ESP8266WiFi.h>                //
+#include <WiFiUdp.h>                    //
+
+#include <OSCBoards.h>                  // https://github.com/CNMAT/OSC
+#include <OSCMessage.h>                 // https://github.com/CNMAT/OSC
+#include <OSCBundle.h>                  // https://github.com/CNMAT/OSC
+
 #include "config.h"
 #include "interp.h"
 #include "llist.h"
@@ -14,18 +23,15 @@
 
 SPISettings settings(16000000, MSBFIRST, SPI_MODE0);
 
-ADC *adc = new ADC();     // ADC object
-ADC::Sync_result result;  // ADC_0 & ADC_1
+WiFiUDP Udp;                            // UDP instance to send and receive packets over UDP
 
-SLIPEncodedUSBSerial SLIPSerial(thisBoardsSerialUSB);
-
-//elapsedMillis timerFps = 0;
-uint16_t fps = 0;
-
-// Array to store all parameters used to configure the two 8:1 analog multiplexeurs
+// SINGLE Analog INPUT (ESP8266)
+// Array to store all parameters used to configure the two 8:1 analog INPUT multiplexeurs (REF:
+// If the chipset have SINGLE Analog INPUT you have to Perform a single Rows scanning
 // Eatch byte |ENA|A|B|C|ENA|A|B|C|
-byte setDualRows[ROWS] = {
-  0x55, 0x77, 0x66, 0x44, 0x22, 0x11, 0x00, 0x33
+byte setSingleRows[ROWS] = {
+  0x58, 0x78, 0x68, 0x48, 0x28, 0x18, 0x8, 0x38,
+  0x85, 0x87, 0x86, 0x84, 0x82, 0x81, 0x80, 0x83
 };
 
 char      serialConf[4] = {0};              // Array to store boot serial config
@@ -58,9 +64,8 @@ inline void matrix_scan(void);
 void matrix_calibration(OSCMessage &msg);
 void matrix_threshold(OSCMessage &msg);
 void matrix_raw_data(OSCMessage &msg);
-//void matrix_blobs(OSCMessage &msg);
-inline void blobs_debug(void);
+void matrix_blobs(OSCMessage &msg);
 
-//void bootBlink(const uint8_t pin, uint8_t flash);
+void bootBlink(const uint8_t pin, uint8_t flash);
 
 #endif /*__MAIN_H__*/

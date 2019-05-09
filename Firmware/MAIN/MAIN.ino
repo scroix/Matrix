@@ -1,5 +1,5 @@
 /*
-  ** E256 Firmware v1.0 **
+  ** E256 Firmware v1.0 (ESP8266)**
   This file is part of the eTextile-matrix-sensor project - http://matrix.eTextile.org
   Copyright (c) 2014-2018 Maurin Donneaud <maurin@etextile.org>
   This work is licensed under Creative Commons Attribution-ShareAlike 4.0 International license, see the LICENSE file for details.
@@ -7,65 +7,45 @@
 
 #include "main.h"
 
-// FPS with CPU speed to 120 MHz (Overclock)
-// Optimize Fastest with LTO (Link Time Optimizations)
-// 523 FPS ADC input
-//  28 FPS with BILINEAR_INTERPOLATION <- it have to be optimize!
-//  30 FPS with interpolation & blob tracking
+const char WIFI_SSID[] = "Chevrette";             // Connect to WiFi SSID
+const char WIFI_PASS[] = "ch0c0latchienjaune";    // WiFi SSID setup
+const IPAddress REMOTE_IP(10, 72, 1, 255);        // Brodcast IP
+const unsigned int REMOTE_UDP_PORT = 9999;        // Remote port to send OSC mesages
+const unsigned int LOCAL_UDP_PORT = 7777;         // Local port to listen for OSC packets (actually not used for sending)
 
-uint8_t E256_threshold = 30; // Threshold defaultused to adjust toutch sensitivity (10 is low 40 is high)
+uint8_t E256_threshold = 30; // Default threshold used to adjust toutch sensitivity (10 is low 40 is high)
+
+OSCErrorCode error;
 
 //////////////////////////////////////////////////// SETUP
 
 void setup() {
 
-  //pinMode(LED_BUILTIN, OUTPUT); // FIXME - BUILTIN_LED is used for SPI hardware
-  //digitalWrite(LED_BUILTIN, LOW); // FIXME - BUILTIN_LED is used for SPI hardware
+  pinMode(LED_BUILTIN, OUTPUT);        // FIXME - BUILTIN_LED is used for SPI hardware
+  digitalWrite(LED_BUILTIN, LOW);      // FIXME - BUILTIN_LED is used for SPI hardware
 
-#ifdef E256_BLOBS_SLIP_OSC
-  SLIPSerial.begin(BAUD_RATE);   // Arduino serial library ** 230400 ** extended with SLIP encoding
-#else
-  Serial.begin(BAUD_RATE);       // Arduino serial library ** 230400 **
-  while (!Serial.dtr());         // Wait for user to start the serial monitor
-#endif /*__E256_BLOBS_SLIP_OSC__*/
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+  while (WiFi.status() != WL_CONNECTED);
+  bootBlink(LED_BUILTIN, 12);
+  Udp.begin(LOCAL_UDP_PORT);
 
   //pinMode(BUTTON_PIN, INPUT_PULLUP);          // Set button pin as input and activate the input pullup resistor // FIXME - NO BUTTON_PIN ON the E256!
   //attachInterrupt(BUTTON_PIN, calib, RISING); // Attach interrrupt on button PIN // FIXME - NO BUTTON_PIN ON the E256
 
-  //SPI.setSCK(E256_SS_PIN);        // D10 - Hardware SPI no need to specify it!
-  //SPI.setSCK(E256_SCK_PIN);       // D13 - Hardware SPI no need to specify it!
-  //SPI.setMOSI(E256_MOSI_PIN);     // D11 - Hardware SPI no need to specify it!
+  //SPI.setSCK(E256_SS_PIN);             // D8 - Hardware SPI no need to specify it!
+  //SPI.setSCK(E256_SCK_PIN);            // D5 - Hardware SPI no need to specify it!
+  //SPI.setMOSI(E256_MOSI_PIN);          // D7 - Hardware SPI no need to specify it!
 
   pinMode(E256_SS_PIN, OUTPUT);
   pinMode(E256_SCK_PIN, OUTPUT);
   pinMode(E256_MOSI_PIN, OUTPUT);
-  digitalWriteFast(E256_SS_PIN, LOW);    // Set latchPin LOW
-  digitalWriteFast(E256_SS_PIN, HIGH);   // Set latchPin HIGH
+  digitalWrite(E256_SS_PIN, LOW);        // Set latchPin LOW (only for Teensy)
+  digitalWrite(E256_SS_PIN, HIGH);       // Set latchPin HIGH
   SPI.begin();                           // Start the SPI module
   SPI.beginTransaction(settings);        // (16000000, MSBFIRST, SPI_MODE0);
+  pinMode(ADC_PIN, INPUT);               // Teensy PIN A9
 
-  pinMode(ADC0_PIN, INPUT);              // Teensy PIN A9
-  pinMode(ADC1_PIN, INPUT);              // Teensy PIN A3
-
-#ifdef E256_ADC_SYNCHRO
-  adc->setAveraging(1, ADC_0);                                           // Set number of averages
-  adc->setResolution(8, ADC_0);                                          // Set bits of resolution
-  adc->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED, ADC_0); // Change the conversion speed
-  //adc->setConversionSpeed(ADC_CONVERSION_SPEED::HIGH_SPEED, ADC_0);    // Change the conversion speed
-  adc->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED, ADC_0);     // Change the sampling speed
-  //adc->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED, ADC_0);        // Change the sampling speed
-  //adc->enableCompare(1.0 / 3.3 * adc->getMaxValue(ADC_0), 0, ADC_0);   // Measurement will be ready if value < 1.0V
-
-  adc->setAveraging(1, ADC_1);                                           // Set number of averages
-  adc->setResolution(8, ADC_1);                                          // Set bits of resolution
-  adc->setConversionSpeed(ADC_CONVERSION_SPEED::VERY_HIGH_SPEED, ADC_1); // Change the conversion speed
-  // adc->setConversionSpeed(ADC_CONVERSION_SPEED::HIGH_SPEED, ADC_1);   // Change the conversion speed
-  adc->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED, ADC_1);     // Change the sampling speed
-  //adc->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED, ADC_1);        // Change the sampling speed
-  //adc->enableCompare(1.0 / 3.3 * adc->getMaxValue(ADC_1), 0, ADC_1);   // Measurement will be ready if value < 1.0V
-#else
-  analogReadRes(8); // Set the ADC converteur resolution to 8 bit
-#endif /*__E256_ADC_SYNCHRO__*/
+  //analogReadResolution(8); // Set the ADC converteur resolution to 8 bit // FIXME!
 
   // Raw frame init
   rawFrame.numCols = COLS;
@@ -93,78 +73,51 @@ void setup() {
   llist_raz(&outputBlobs);
 
   bilinear_interp_init(&interp);
-  //bootBlink(LED_BUILTIN, 9); // FIXME - BUILTIN_LED is used for hardware SPI
-
-  //timerFps = 0;
+  bootBlink(LED_BUILTIN, 9);
 }
 
 //////////////////////////////////////////////////// LOOP
 void loop() {
 
-#ifdef E256_BLOBS_SLIP_OSC
   OSCMessage OSCmsg;
-  int size;
-  while (!SLIPSerial.endofPacket()) {
-    if ((size = SLIPSerial.available()) > 0) {
-      while (size--)
-        OSCmsg.fill(SLIPSerial.read());
+  int size = Udp.parsePacket();
+
+  if ( size > 0 ) {
+    while ( size-- ) {
+      OSCmsg.fill(Udp.read());
+    }
+    if (!OSCmsg.hasError()) {
+      OSCmsg.dispatch("/c", matrix_calibration);
+      OSCmsg.dispatch("/t", matrix_threshold);
+      OSCmsg.dispatch("/r", matrix_raw_data); // TODO
+      OSCmsg.dispatch("/b", matrix_blobs);
+    } else {
+      error = OSCmsg.getError();
+      bootBlink(LED_BUILTIN, error);
     }
   }
-  if (!OSCmsg.hasError()) {
-    OSCmsg.dispatch("/calibrate", matrix_calibration);
-    OSCmsg.dispatch("/threshold", matrix_threshold);
-    OSCmsg.dispatch("/rowData", matrix_raw_data); // TODO
-    OSCmsg.dispatch("/blobs", matrix_blobs);
-  }
-#else
-  blobs_debug();
-#endif /*__E256_BLOBS_SLIP_OSC__*/
-
-#ifdef E256_FPS
-  if (timerFPS >= 1000) {
-    timerFPS = 0;
-    fps = 0;
-    Serial.printf(F("\nFPS: %d"), fps);
-  }
-  fps++;
-#endif /*__E256_FPS__*/
 }
 
 //////////////////////////////////////////////////// FONCTIONS
 
 void matrix_scan(void) {
 
-  // Columns are digital OUTPUT PINS - We supply one column at a time
-  // Rows are analog INPUT PINS - We sens two rows at a time
-  uint16_t setCols = 0x8000;
+  // Columns are TWO shift registers (digital OUTPUT PINS). We do supply ONE column at a time
+  // Rows are TWO 8:1 analog multiplexers (analog INPUT PINS). We can sens ONE or TWO rows at a time
 
-  for (uint8_t col = 0; col < COLS; col++) {        // 0 to 15
-    for (uint8_t row = 0; row < DUAL_ROWS; row++) { // 0 to 7
+  uint16_t setCols = 0x8000;                        // Powering the first column (MSB:10000000 LSB:00000000)
 
-      digitalWriteFast(E256_SS_PIN, LOW);      // Set latchPin LOW
-      SPI.transfer(setCols & 0xff);            // Shift out the LSB byte to set up the OUTPUT shift register
-      SPI.transfer(setCols >> 8);              // Shift out the MSB byte to set up the OUTPUT shift register
-      SPI.transfer(setDualRows[row]);          // Shift out one byte that setup the two 8:1 analog multiplexers
-      digitalWriteFast(E256_SS_PIN, HIGH);     // Set latchPin HIGH
-      delayMicroseconds(5);                    // See switching time of the 74HC4051BQ multiplexeur
-
-      uint8_t rowIndexA = row * COLS + col;    // Row IndexA computation
-      uint8_t rowIndexB = rowIndexA + 128;     // Row IndexB computation (ROW_FRAME/2 == 128)
-
-#ifdef E256_ADC_SYNCHRO
-      result = adc->analogSynchronizedRead(ADC0_PIN, ADC1_PIN);
-      //frameValues[rowIndexA] = constrain(result.result_adc0 - minVals[rowIndexA], 0, 255);
-      //frameValues[rowIndexB] = constrain(result.result_adc1 - minVals[rowIndexB], 0, 255);
-
-      int valA = result.result_adc0 - minVals[rowIndexA];
-      valA >= 0 ? frameValues[rowIndexA] = (uint8_t)valA : frameValues[rowIndexA] = 0;
-      int valB = result.result_adc1 - minVals[rowIndexB];
-      valB >= 0 ? frameValues[rowIndexB] = (uint8_t)valB : frameValues[rowIndexB] = 0;
-
-#else
-      frameValues[rowIndexA] = constrain(analogRead(ADC0_PIN) - minVals[rowIndexA], 0, 255);
-      frameValues[rowIndexB] = constrain(analogRead(ADC1_PIN) - minVals[rowIndexB], 0, 255);
-#endif /*__E256_ADC_SYNCHRO__*/
+  for (uint8_t col = 0; col < COLS; col++) {        // 0 to 15                                              // Sens ONE rows at a time
+    for (uint8_t row = 0; row < ROWS; row++) {      // 0 to 15
+      digitalWrite(E256_SS_PIN, LOW);               // Set latchPin LOW
+      SPI.transfer(setCols & 0xff);                 // Shift out the LSB byte to set up the OUTPUT shift registers
+      SPI.transfer(setCols >> 8);                   // Shift out the MSB byte to set up the OUTPUT shift registers
+      SPI.transfer(setSingleRows[row]);             // Shift out one byte that setup the two 8:1 analog multiplexers
+      digitalWrite(E256_SS_PIN, HIGH);              // Set latchPin LOW
+      delayMicroseconds(5);                         // TODO: See switching time of the 74HC4051BQ multiplexeur
+      uint8_t rowIndex = row * COLS + col;          // Compute rowIndex
+      int val = analogRead(ADC_PIN) - minVals[rowIndex];
+      val >= 0 ? frameValues[rowIndex] = (uint8_t)val : frameValues[rowIndex] = 0;
     }
     setCols = setCols >> 1;
   }
@@ -181,70 +134,50 @@ void matrix_scan(void) {
 
 void matrix_calibration(OSCMessage & msg) {
 
-  uint8_t calibration_cycles = msg.getInt(0) & 0xFF;   // Get the first uint8_t in an int32_t
+  uint8_t calibration_cycles = msg.getInt(0) & 0xFF; // Get the first uint8_t in an int32_t
 
   for (uint8_t i = 0; i < calibration_cycles; i++) {
-    // Columns are digital OUTPUT PINS - We supply one column at a time
-    // Rows are analog INPUT PINS - We sens two rows at a time
+    // Columns are digital OUTPUT PINS that have to be supply one by one
+    // Rows are analog INPUT PINS that have to be sens one by one
     uint16_t setCols = 0x8000;
 
     for (uint8_t col = 0; col < COLS; col++) {
-      for (uint8_t row = 0; row < DUAL_ROWS; row++) {
-
-        digitalWriteFast(E256_SS_PIN, LOW);   // Set latchPin LOW
-        SPI.transfer(setCols & 0xff);         // Shift out the LSB byte to set up the OUTPUT shift register
-        SPI.transfer(setCols >> 8);           // Shift out the MSB byte to set up the OUTPUT shift register
-        SPI.transfer(setDualRows[row]);       // Shift out one byte that setup the two 8:1 analog multiplexers
-        digitalWriteFast(E256_SS_PIN, HIGH);  // Set latchPin HIGH
-        delayMicroseconds(10);                // See switching time of the 74HC4051BQ multiplexeur
-
-#ifdef E256_ADC_SYNCHRO
-        result = adc->analogSynchronizedRead(ADC0_PIN, ADC1_PIN);
-        uint8_t ADC0_val = result.result_adc0;
-        uint8_t ADC1_val = result.result_adc1;
-#else
-        uint8_t ADC0_val = analogRead(ADC0_PIN);
-        uint8_t ADC1_val = analogRead(ADC1_PIN);
-#endif /*__E256_ADC_SYNCHRO__*/
-
-        uint8_t rowIndexA = row * COLS + col;    // Row IndexA computation
-        uint8_t rowIndexB = rowIndexA + 128;     // Row IndexB computation (ROW_FRAME/2 == 128)
-
-        if (ADC0_val > minVals[rowIndexA]) {
-          minVals[rowIndexA] = ADC0_val;
-        }
-        if (ADC1_val > minVals[rowIndexB]) {
-          minVals[rowIndexB] = ADC1_val;
-        }
+      for (uint8_t row = 0; row < ROWS; row++) {
+        digitalWrite(E256_SS_PIN, LOW);        // Set latchPin LOW
+        SPI.transfer(setCols & 0xff);          // Shift out the LSB byte to set up the OUTPUT shift register
+        SPI.transfer(setCols >> 8);            // Shift out the MSB byte to set up the OUTPUT shift register
+        SPI.transfer(setSingleRows[row]);      // Shift out one byte that setup the two 8:1 analog multiplexers
+        digitalWrite(E256_SS_PIN, HIGH);       // Set latchPin LOW
+        delayMicroseconds(10);                 // TODO: see switching time of the 74HC4051BQ multiplexeur
+        uint8_t rowIndex = row * COLS + col;   // Compute rowIndex
+        uint8_t ADC_val = analogRead(ADC_PIN);
+        //if (ADC_val > minVals[rowIndex]) minVals[rowIndex] = (uint8_t)ADC_val; // FIXME
+        if (ADC_val > minVals[rowIndex]) minVals[rowIndex] = ADC_val >> 2;
       }
       setCols = setCols >> 1;
     }
   }
 }
 
-// Get threshold from an OSC message
+// Set the threshold with incoming OSC message
 void matrix_threshold(OSCMessage & msg) {
-
   // Teensy is Little-endian!
   // The sequence addresses/sends/stores the least significant byte first (lowest address)
   // and the most significant byte last (highest address).
   E256_threshold = msg.getInt(0) & 0xFF; // Get the first int8_t of the int32_t
 }
 
-/// Send raw frame values in SLIP-OSC formmat
+/// Send raw frame values in OSC formmat
 void matrix_raw_data(OSCMessage & msg) {
-
+  OSCBundle OSCbundle;
   //uint8_t ... = msg.getInt(0) & 0xFF;   // Get the first int8_t of the int32_t
 
-  matrix_scan();
-  OSCMessage m("/m");
-  m.add(frameValues, ROW_FRAME);
-  SLIPSerial.beginPacket();
-  m.send(SLIPSerial);   // Send the bytes to the SLIP stream
-  SLIPSerial.endPacket();    // Mark the end of the OSC Packet
+  Udp.beginPacket(REMOTE_IP, REMOTE_UDP_PORT);
+  OSCbundle.send(Udp);            // Send the bytes to the SLIP stream
+  Udp.endPacket();                // Mark the end of the OSC Packet
 }
 
-/// Send all blobs values in SLIP-OSC formmat
+/// Send all blobs values in OSC formmat
 void matrix_blobs(OSCMessage & msg) {
 
   OSCBundle OSCbundle;
@@ -267,9 +200,6 @@ void matrix_blobs(OSCMessage & msg) {
     &outputBlobs           // list_t
   );
 
-  // TODO? TUIO_SET messages are used to communicate information about an object's state such as position, orientation, and other recognized states.
-  // TODO? TUIO_ALIVE messages indicate the current set of objects present on the surface using a list of unique Session IDs.
-
   // Hear is an method to minimise the size of the OCS packet.
   for (blob_t* blob = iterator_start_from_head(&outputBlobs); blob != NULL; blob = iterator_next(blob)) {
     blobPacket[0] = blob->UID;        // uint8_t unique session ID
@@ -284,42 +214,18 @@ void matrix_blobs(OSCMessage & msg) {
     msg.add(blobPacket, BLOB_PACKET_SIZE);
     OSCbundle.add(msg);
   }
-  SLIPSerial.beginPacket();     //
-  OSCbundle.send(SLIPSerial);   // Send the bytes to the SLIP stream
-  SLIPSerial.endPacket();       // Mark the end of the OSC Packet
-  OSCbundle.empty();            // empty the OSCMessage ready to use for new messages
-}
-
-void blobs_debug() {
-  Serial.println("TOP");
-
-  matrix_scan();
-
-  bilinear_interp(&interpolatedFrame, &rawFrame, &interp);
-
-  find_blobs(
-    &interpolatedFrame,    // image_t uint8_t [NEW_FRAME] - 1D array
-    bitmap,                // char array [NEW_FRAME] - 1D array // NOT &bitmap !?
-    NEW_ROWS,              // const int
-    NEW_COLS,              // const int
-    E256_threshold,        // uint8_t
-    MIN_BLOB_PIX,          // const int
-    MAX_BLOB_PIX,          // const int
-    &freeBlobs,            // list_t
-    &blobs,                // list_t
-    &outputBlobs           // list_t
-  );
-
+  Udp.beginPacket(REMOTE_IP, REMOTE_UDP_PORT);
+  OSCbundle.send(Udp);            // Send the bytes to the SLIP stream
+  Udp.endPacket();                // Mark the end of the OSC Packet
+  //OSCbundle.empty();            // empty the OSCMessage ready to use for new messages
 }
 
 
-/*
-  void bootBlink(const uint8_t pin, uint8_t flash) {
+void bootBlink(const uint8_t pin, uint8_t flash) {
   for (uint8_t i = 0; i < flash; i++) {
     digitalWrite(pin, HIGH);
-    delay(50);
+    delay(40);
     digitalWrite(pin, LOW);
-    delay(50);
+    delay(40);
   }
-  }
-*/
+}

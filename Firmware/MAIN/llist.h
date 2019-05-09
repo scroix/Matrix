@@ -7,6 +7,8 @@
 #ifndef __LLIST_H__
 #define __LLIST_H__
 
+#include <stdint.h> 
+
 #include "blob.h"
 
 ////////////// Iterators //////////////

@@ -9,6 +9,8 @@
 #ifndef __BLOB_H__
 #define __BLOB_H__
 
+#include <Arduino.h>
+
 #include "config.h"
 #include "llist.h"
 
