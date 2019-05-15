@@ -1,6 +1,6 @@
 /*
   This file is part of the eTextile-matrix-sensor project - http://matrix.eTextile.org
-  Copyright (c) 2014-2018 Maurin Donneaud <maurin@etextile.org>
+  Copyright (c) 2014-2019 Maurin Donneaud <maurin@etextile.org>
   This work is licensed under Creative Commons Attribution-ShareAlike 4.0 International license, see the LICENSE file for details.
 */
 
@@ -61,15 +61,4 @@ void bilinear_interp(const image_t *outputFrame, const image_t* inputFrame, cons
       }
     }
   }
-  
-#ifdef DEBUG_INTERP
-  for (uint16_t i = 0; i < NEW_FRAME; i++) {
-    if ((i % outputFrame->numCols) == (outputFrame->numCols - 1)) Serial.println();
-    //Serial.printf(F(" %d"), bilinIntOutput[i]);
-    delay(1);
-  }
-  Serial.println();
-  delay(500);
-#endif /*__DEBUG_INTERP__*/
-
 }

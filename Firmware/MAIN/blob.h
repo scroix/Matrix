@@ -2,7 +2,7 @@
   FORKED FROM https://github.com/openmv/openmv/tree/master/src/omv/img
   Added custom blob détection algorithm to keep track of the blobs ID's
     This patch is part of the eTextile-matrix-sensor project - http://matrix.eTextile.org
-    Copyright (c) 2014-2018 Maurin Donneaud <maurin@etextile.org>
+    Copyright (c) 2014-2019 Maurin Donneaud <maurin@etextile.org>
     This work is licensed under Creative Commons Attribution-ShareAlike 4.0 International license, see the LICENSE file for details.
 */
 

@@ -1,20 +1,44 @@
 /*
   This file is part of the eTextile-matrix-sensor project - http://matrix.eTextile.org
-  Copyright (c) 2014-2018 Maurin Donneaud <maurin@etextile.org>
+  Copyright (c) 2014-2019 Maurin Donneaud <maurin@etextile.org>
   This work is licensed under Creative Commons Attribution-ShareAlike 4.0 International license, see the LICENSE file for details.
 */
 
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-/*__E256_ESP8266_BOARD CONTROL__*/
-//#define E256_X0 -1                      // TODO: select X-axis origine [-1:1]
-//#define E256_Y0 -1                      // TODO: select Y-axis origine [-1:1]
+/*__E256_ESP8266_BOARD_CONTROL__*/
+#define STA_SSID          "lele"
+#define STA_PSK           "michtopatato"
+//#define REMOTE_IP         "192,168,0,255"
+#define REMOTE_UDP_PORT    3001
+#define LOCAL_UDP_PORT     7771
+//#define E256_X0          -1            // TODO: select X-axis origine [-1:1]
+//#define E256_Y0          -1            // TODO: select Y-axis origine [-1:1]
 
-#define LED_BUILTIN        D2             //
-//#define BUTTON_PIN       32             // FIXME - NO BUTTON_PIN on the E256 PCB
+//#define DEBUG_ADC
+//#define DEBUG_INTERP
+//#define DEBUG_BLOBS_OSC
+
+//#define DEBUG_BITMAP
+//#define DEBUG_CCL
+//#define DEBUG_LIST
+//#define DEBUG_BLOBS_ID
+//#define DEBUG_BLOBS_CENTER
+
+/*__DO_NOT_CHANGE__*/
+#define E256_SS_PIN        D8             // E2B56:RCK  - ESP8266 D1_MINI Hardware SPI:SS   -> D8 
+//#define E256_SCK_PIN       D5             // E2B56:SCK  - ESP8266 D1_MINI Hardware SPI:SCLK -> D5 // OK
+//#define E256_MOSI_PIN      D7             // E2B56:DS   - ESP8266 D1_MINI Hardware SPI:MOSI -> D7 // SER
+//#define E256_MISO_PIN      D6             // E2B56:(NA) - ESP8266 D1_MINI Hardware SPI:MISO -> D6
+
+// If you want to plug the E256 breakout board to an MCU with sigle ADC
+// you will need to connect the E256 AN0 & AN1 to the same ADC INPUT of your MCU
+#define ADC_PIN            A0             // This is the Anolog INPUT PIN of the ESP8266 D1 mini
+
+#define LED_BUILTIN        2              // D1 MINI LED PIN
+//#define BUTTON_PIN       x              // FIXME - NO BUTTON_PIN yet
 #define BAUD_RATE          115200
-
 #define COLS               16
 #define ROWS               16
 #define DUAL_ROWS          (ROWS / 2)
@@ -28,23 +52,5 @@
 #define MIN_BLOB_PIX       4              // Set the minimum blob pixels
 #define MAX_BLOB_PIX       1024           // Set the maximum blob pixels
 #define BLOB_PACKET_SIZE   7              // Blob data packet (bytes)
-
-#define E256_SS_PIN        D8             // SPI:SS    E2B56:RCK  // D8 - ESP8266 D1_MINI Hardware SPI
-#define E256_SCK_PIN       D5             // SPI:SCK   E2B56:SCK  // D5 - ESP8266 D1_MINI Hardware SPI
-#define E256_MOSI_PIN      D7             // SPI:MOSI  E2B56:DS   // D7 - ESP8266 D1_MINI Hardware SPI
-
-// If you want to plug the E256 breakout board to an MCU with sigle ADC you will need to add a strap on the E256 PCB
-// Connect the multiplexerA OUTPUT PIN (AN0) to the multiplexerB OUTPUT PIN (AN1)
-// Use the multiplexerA output (AN0) as main Analog OUTPUT PIN
-#define ADC_PIN            A0             // This is the Anolog INPUT PIN of the ESP8266 D1 mini
-
-//#define DEBUG_ADC
-//#define DEBUG_INTERP
-//#define DEBUG_BLOBS_OSC
-//#define DEBUG_BITMAP
-//#define DEBUG_CCL
-//#define DEBUG_BLOB_ID
-//#define DEBUG_CENTER
-//#define DEBUG_LIST
 
 #endif /*__CONFIG_H__*/

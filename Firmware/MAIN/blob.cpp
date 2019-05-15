@@ -2,7 +2,7 @@
   FORKED FROM https://github.com/openmv/openmv/tree/master/src/omv/img
   Added custom blob détection algorithm to keep track of the blobs ID's
     This patch is part of the eTextile-matrix-sensor project - http://matrix.eTextile.org
-    Copyright (c) 2014-2018 Maurin Donneaud <maurin@etextile.org>
+    Copyright (c) 2014-2019 Maurin Donneaud <maurin@etextile.org>
     This work is licensed under Creative Commons Attribution-ShareAlike 4.0 International license, see the LICENSE file for details.
 */
 
@@ -115,7 +115,7 @@ void find_blobs(
           blob->centroid.Y = (uint8_t) (blob_y2 - ((blob_y1 - blob_y2) / 2)); // y centroid position
           // uint8_t* row_ptr = ROW_PTR(inFrame_ptr, blob->centroid.Y); // DO NOT WORK!?
           // blob->box.Z = GET_PIXEL(row_ptr, blob->centroid.X);   // DO NOT WORK!?
-          //if (DEBUG_CENTER) Serial.printf("\n DEBUG_CENTER / blob_cx: %d\tblob_cy: %d\tblob_cz: %d", blob->centroid.X, blob->centroid.Y, blob->centroid.Z);
+          //if (DEBUG_BLOBS_CENTER) Serial.printf("\n DEBUG_CENTER / blob_cx: %d\tblob_cy: %d\tblob_cz: %d", blob->centroid.X, blob->centroid.Y, blob->centroid.Z);
 
           llist_push_back(inputBlobs_ptr, blob);
           //if (DEBUG_CCL) Serial.printf("\n DEBUG_CCL / Blob: %p added to the **blobs** linked list", blob);

@@ -6,21 +6,24 @@
 - E256 brekout board
 - ESP8266 (D1 MINI)
 - Arduino IDE additional hardware
-  - ESP8266:
+  - ESP8266: https://github.com/esp8266/Arduino#installing-with-boards-manager
 - Arduino IDE additional library
   - OSC: https://github.com/CNMAT/OSC (Installed with Arduino library manager)
 
 ### Setting up Arduino IDE
-To be able to use Arduino IDE with ESP8266 MCU add this web link to to "File > Preferences > Additional Boards Manager > URLs: http://arduino.esp8266.com/stable/package_esp8266com_index.json
+To be able to use Arduino IDE with ESP8266 MCU add this web link to to "File > Preferences > Additional Boards Manager > URLs:
+    http://arduino.esp8266.com/stable/package_esp8266com_index.json
 Open Boards Manager from Tools > Board > Boards Manager, and type ESP8266
+Working with ESP8266 V4.0.0
 
-Under Linux : add UDEV rules to /etc/udev/init.d/
+Linux requirements: add UDEV rules to /etc/udev/init.d/
 
-- Board:       	ESP8266
-- CPU frequency 160 MHz
-- Uplode speed  230400
+- Board:       	 ESP8266
+- CPU frequency  160 MHz
+- Uplode speed   230400
+- Flash size 	 3M (4M SPIFFS)
 
-### Setting up Arduino-mk
+### Setting up Arduino-mk (Optional)
     sudo apt-get install arduino-mk
     git clone https://github.com/sudar/Arduino-Makefile.git
 
@@ -36,35 +39,35 @@ Under Linux : add UDEV rules to /etc/udev/init.d/
 
 ## OSC data paket
 ### on_touch_pressed
-- [0-255]	UID		   // Percistant blob ID
-- [1]		alive	   //  
-- [0-64]	centroid.X // X blob centroid coordinate
-- [0-64]	centroid.Y // Y blob centroid coordinate
-- [0-255]	box.W 	   // Bounding box Width
-- [0-255]	box.H 	   // Bounding box Height
-- [0-255]	box.D 	   // Bounding box depth
+    [0-255]	UID		   // Percistant blob ID
+    [1]		alive	   //
+    [0-64]	centroid.X // X blob centroid coordinate
+    [0-64]	centroid.Y // Y blob centroid coordinate
+    [0-255]	box.W 	   // Bounding box Width
+    [0-255]	box.H 	   // Bounding box Height
+    [0-255]	box.D 	   // Bounding box depth
 
-### on_touch_release // FIXME or not ?
-- [0-255]	UID		   // Percistant blob ID
-- [0]		alive	   // 
-- [0-64]	centroid.X // X blob centroid coordinate
-- [0-64]	centroid.Y // Y blob centroid coordinate
-- [0-255]	box.W 	   // Bounding box Width
-- [0-255]	box.H 	   // Bounding box Height
-- [0-255]	box.D 	   // Bounding box depth
+### on_touch_release
+    [0-255]	UID		   // Percistant blob ID
+    [0]		alive	   // 
+    [0-64]	centroid.X // X blob centroid coordinate
+    [0-64]	centroid.Y // Y blob centroid coordinate
+    [0-255]	box.W 	   // Bounding box Width
+    [0-255]	box.H 	   // Bounding box Height
+    [0-255]	box.D 	   // Bounding box depth
 
 ## E256 & Teensy pins
 Control pins to send values to the 8-BITs shift registers used on the E-256 PCB
 
 | ESP8266 PINS         | E256 PINS | E256 components                                      |
 | -------------------- | --------- | ---------------------------------------------------- |
-| ADC_3                | AN1       | OUTPUT of an analog multiplexer 8:1                  |
+| AD0                  | AN1       | OUTPUT of an analog multiplexer 8:1                  |
 | GND                  | GND       | Ground                                               |
-| D13 (SPI:SCK)        | SCK       | 74HC595 clock pin (SH_CP)                            |
-| ADC_9                | AN0       | OUTPUT of an analog multiplexer 8:1                  |
-| Vin                  | VCC       | 3.6 - 5V                                             |
-| D11 (SPI:MOSI)       | DS        | Data input of the first 8-BIT shift register 74HC595 |
-| D10 (SPI:SS)         | RCK       | Latch pin of the first 74HC595 (ST_CP)               |
+| D5  (SPI:SCK)        | SCK       | 74HC595 clock pin (SH_CP)                            |
+| AD0                  | AN0       | OUTPUT of an analog multiplexer 8:1                  |
+| 3V3                  | VCC       | VCC                                                  |
+| D7  (SPI:MOSI)       | DS        | Data input of the first 8-BIT shift register 74HC595 |
+| D8  (SPI:SS)         | RCK       | Latch pin of the first 74HC595 (ST_CP)               |
 | GND                  | GND       | Ground                                               |
 
 ## Copyright
@@ -148,7 +151,6 @@ Thanks to Vincent Roudaut, Hannah Perner Willson, Cedric Honnet, Antoine Meisso,
     COL_14 -> Q1 : 00000010 -> HEX 0x2
     COL_15 -> Q0 : 00000001 -> HEX 0x1
 
-### Byte_B
     COL_0 -> Q7 : 10000000 -> HEX 0x80
     COL_1 -> Q6 : 01000000 -> HEX 0x40
     COL_2 -> Q5 : 00100000 -> HEX 0x20
@@ -158,7 +160,7 @@ Thanks to Vincent Roudaut, Hannah Perner Willson, Cedric Honnet, Antoine Meisso,
     COL_6 -> Q1 : 00000010 -> HEX 0x2
     COL_7 -> Q0 : 00000001 -> HEX 0x1
 
-### Byte_C
+### Byte_B
     ROW_0 -> Y5 : 0101 1000 -> HEX 0x58
     ROW_1 -> Y7 : 0111 1000 -> HEX 0x78
     ROW_2 -> Y6 : 0110 1000 -> HEX 0x68
