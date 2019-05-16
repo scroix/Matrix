@@ -131,6 +131,7 @@ void loop() {
     OSCbundle.add(msg);
   }
   Udp.beginPacket(REMOTE_IP, REMOTE_UDP_PORT);
+  //Udp.write(OSCbundle);               // Send the bytes to the SLIP stream
   OSCbundle.send(Udp);               // Send the bytes to the SLIP stream
   Udp.endPacket();                   // Mark the end of the OSC Packet
 #else

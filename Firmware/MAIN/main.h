@@ -50,8 +50,6 @@ llist_t   freeBlobs;
 llist_t   blobs;
 llist_t   outputBlobs;
 
-uint8_t   E256_threshold = 30;                // Default threshold used to adjust toutch sensitivity (10 is low 40 is high)
-
 uint8_t blobPacket[BLOB_PACKET_SIZE] = {0};
 
 inline void matrix_scan(void);
