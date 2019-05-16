@@ -13,10 +13,10 @@
 //#define REMOTE_IP         "192,168,0,255"
 #define REMOTE_UDP_PORT    3001
 #define LOCAL_UDP_PORT     7771
+#define BLOBS_OSC
+
 //#define E256_X0          -1            // TODO: select X-axis origine [-1:1]
 //#define E256_Y0          -1            // TODO: select Y-axis origine [-1:1]
-
-uint8_t E256_threshold = 10;              // Default threshold used to adjust toutch sensitivity (10 is low 40 is high)
 
 //#define DEBUG_ADC
 //#define DEBUG_INTERP

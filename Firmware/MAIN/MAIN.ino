@@ -8,6 +8,7 @@
 #include "main.h"
 
 IPAddress REMOTE_IP(192, 168, 0, 110);
+uint8_t E256_threshold = 10;                   // Default threshold used to adjust toutch sensitivity (10 is low 40 is high)
 
 //////////////////////////////////////////////////// SETUP
 void setup() {
@@ -96,7 +97,7 @@ void loop() {
 
   matrix_scan();
 
-#ifndef DEBUG_ADC || DEBUG_INTERP
+#ifdef BLOBS_OSC
   OSCBundle OSCbundle;
 
   bilinear_interp(&interpolatedFrame, &rawFrame, &interp);
@@ -113,9 +114,7 @@ void loop() {
     &blobs,                // list_t
     &outputBlobs           // list_t
   );
-#endif
 
-#ifndef DEBUG_BLOBS_OSC
   // Send all blobs an OCS bundle
   for (blob_t* blob = iterator_start_from_head(&outputBlobs); blob != NULL; blob = iterator_next(blob)) {
     blobPacket[0] = blob->UID;        // uint8_t unique session ID
@@ -131,11 +130,11 @@ void loop() {
     OSCbundle.add(msg);
   }
   Udp.beginPacket(REMOTE_IP, REMOTE_UDP_PORT);
-  //Udp.write(OSCbundle);               // Send the bytes to the SLIP stream
   OSCbundle.send(Udp);               // Send the bytes to the SLIP stream
   Udp.endPacket();                   // Mark the end of the OSC Packet
-#else
+#endif /*__BLOBS_OSC__*/
 
+#ifdef DEBUG_BLOBS_OSC
   for (blob_t* blob = iterator_start_from_head(&outputBlobs); blob != NULL; blob = iterator_next(blob)) {
     Serial.print (blob->UID);        // uint8_t unique session ID
     Serial.print(" ");
@@ -152,7 +151,7 @@ void loop() {
     Serial.print (blob->box.D);      // uint8_t
     Serial.println();
   }
-#endif
+#endif /*__DEBUG_BLOBS_OSC__*/
 
 #ifdef DEBUG_ADC
   for (uint8_t col = 0; col < COLS; col++) {
@@ -192,10 +191,9 @@ void matrix_scan(void) {
     for (uint8_t row = 0; row < ROWS; row++) {
       digitalWrite(E256_SS_PIN, LOW);                  // Set latchPin LOW (IO-D8,10k pull-down, SS GPIO15)
       SPI.transfer(column & 0xFF);                     // Shift out the LSB byte to set up the OUTPUT shift register
-      SPI.transfer(column >> 8);                       // Shift out the MSB byte to set up the OUTPUT shift register
+      SPI.transfer((column >> 8) & 0xFF);              // Shift out the MSB byte to set up the OUTPUT shift register
       SPI.transfer(setRow[row]);                       // Shift out one byte to setup the two 8:1 analog multiplexers
       digitalWrite(E256_SS_PIN, HIGH);                 // Set the latchPin HIGH
-      //delayMicroseconds(1);                           // TODO: See switching time of the 74HC4051BQ multiplexeur
 
       uint16_t rowVal = analogRead(ADC_PIN);           // https://arduino-esp8266.readthedocs.io/en/2.5.0/reference.html#analog-input
       uint8_t index = col * COLS + row;                // Compute 1D array index
@@ -223,7 +221,7 @@ void matrix_calibration(OSCMessage & msg) {
       for (uint8_t row = 0; row < ROWS; row++) {
         digitalWrite(E256_SS_PIN, LOW);            // Set latchPin LOW (IO-D8, 10k pull-down, SS GPIO15)
         SPI.transfer(column & 0xFF);               // Shift out the LSB byte to set up the OUTPUT shift register
-        SPI.transfer(column >> 8);                 // Shift out the MSB byte to set up the OUTPUT shift register
+        SPI.transfer((column >> 8) & 0xFF);        // Shift out the MSB byte to set up the OUTPUT shift register
         SPI.transfer(setRow[row]);                 // Shift out one byte to setup the two 8:1 analog multiplexers (
         digitalWrite(E256_SS_PIN, HIGH);           // Set the latchPin HIGH
 
