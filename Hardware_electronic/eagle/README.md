@@ -1,16 +1,14 @@
-# eTextile matrix sensor / Eagle PCB
+# eTextile matrix sensor / PCB
 
-### Transforming textiles into an intuitive way to interact with computers. This project is part of an electronic textiles research on HCI gesture interaction that was started in 2005.
+### Transforming textiles into an intuitive way to interact with computers
+#### This project is part of an electronic textiles research on HCI gesture interaction that was started in 2005
 
-- Author/developer: Maurin Donneaud <maurin@etextile.org> - Industrial designer
-- Repository: https://github.com/eTextile/resistiveMatrix/tree/master
+- Author/developer: Maurin Donneaud <maurin@etextile.org>
+- Repository: https://github.com/eTextile/Matrix/tree/teensy_matrix
 - Project web page: www.eTextile.org
 - License: CC-BY-SA (see the License file)
 
-![alt tag](http://wiki.datapaulette.org/lib/exe/fetch.php/atelier/projets/matrice_capteurs_textiles_05.jpg)
-
-This PCB is adapted to an eTextile bus solution that allows the connection betwin the textile matrix conductive strips and the microcontroller I/O pins.
-The E256 branch of this project present a new PCB design based on etching conductive fabric replacing this eTextile bus solution.
+This PCB is designed for a custom eTextile connection between a textile matrix and the Teensy_3.2 microcontroller I/O pins.
 
 ## Partslist
 
@@ -38,6 +36,3 @@ U1            | MCP73831                     | MCP73831                     | SO
 U3            |                              | AUDIO-JACKSMD2               | AUDIO-JACK-3.5MM-SMD |
 
 ## TODO
-- Replace the Teensy With an other chip
-  - keep compatibility with the Teensy audo lib : http://www.pjrc.com/teensy/td_libs_Audio.html
-- Make the design with Upverter
