@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name e256)(type KiCad)(uri ${KIPRJMOD}/Libraries/e256.pretty)(options "")(descr ""))
+  (lib (name teensy)(type KiCad)(uri ${KIPRJMOD}/Libraries/teensy.pretty)(options "")(descr ""))
+)
