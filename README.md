@@ -4,7 +4,7 @@
 
 - Author: Maurin Donneaud <maurin@etextile.org>
 - Repository: https://github.com/eTextile/Matrix/tree/teensy_matrix
-- Project web page: www.eTextile.org
+- Project web page: http://matrix.eTextile.org
 - License: CC-BY-SA (see the License file)
 
 ![alt tag](https://farm6.staticflickr.com/5572/30306414062_22bba76566_z_d.jpg)
