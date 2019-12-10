@@ -3,9 +3,9 @@
 ### Transforming textiles into an intuitive way to interact with computers
 #### This project is part of an electronic textiles research on HCI gesture interaction that was started in 2005
 
-- Author/developer: Maurin Donneaud <maurin@etextile.org>
+- Author: Maurin Donneaud <maurin@etextile.org>
 - Repository: https://github.com/eTextile/Matrix/tree/teensy_matrix
-- Project web page: www.eTextile.org
+- Project web page: https://matrix.eTextile.org
 - License: CC-BY-SA (see the License file)
 
 This PCB is designed for a custom eTextile connection between a textile matrix and the Teensy_3.2 microcontroller I/O pins.
@@ -36,3 +36,4 @@ U1            | MCP73831                     | MCP73831                     | SO
 U3            |                              | AUDIO-JACKSMD2               | AUDIO-JACK-3.5MM-SMD |
 
 ## TODO
+
