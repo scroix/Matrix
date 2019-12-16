@@ -1,0 +1,6 @@
+[submodule "Hardware_electronic/kicad/library/teensy_library"]
+	path = Hardware_electronic/kicad/library/teensy_library
+	url = https://github.com/XenGi/teensy_library.git
+[submodule "Hardware_electronic/kicad/modules/teensy.pretty"]
+	path = Hardware_electronic/kicad/modules/teensy.pretty
+	url = https://github.com/XenGi/teensy.pretty.git
