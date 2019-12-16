@@ -1,4 +1,4 @@
 (sym_lib_table
-  (lib (name e256)(type Legacy)(uri ${KIPRJMOD}/../Libraries/e256_library/e256.lib)(options "")(descr ""))
-  (lib (name teensy)(type Legacy)(uri ${KIPRJMOD}/../Libraries/teensy_library/teensy.lib)(options "")(descr ""))
+  (lib (name teensy)(type Legacy)(uri /home/maurin/Bureau/eTextile.org/matrix/Hardware_electronic/kicad/library/teensy_library/teensy.lib)(options "")(descr ""))
+  (lib (name e256)(type Legacy)(uri /home/maurin/Bureau/eTextile.org/matrix/Hardware_electronic/kicad/library/e256_library/e256.lib)(options "")(descr ""))
 )

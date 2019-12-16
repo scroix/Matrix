@@ -1,4 +1,4 @@
 (fp_lib_table
-  (lib (name e256)(type KiCad)(uri /home/maurin/Bureau/eTextile.org/matrix/Hardware_electronic/kicad/modules/e256.pretty)(options "")(descr ""))
   (lib (name teensy)(type KiCad)(uri /home/maurin/Bureau/eTextile.org/matrix/Hardware_electronic/kicad/modules/teensy.pretty)(options "")(descr ""))
+  (lib (name e256)(type KiCad)(uri /home/maurin/Bureau/eTextile.org/matrix/Hardware_electronic/kicad/modules/e256.pretty)(options "")(descr ""))
 )

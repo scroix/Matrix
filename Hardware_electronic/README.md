@@ -8,8 +8,8 @@
 - License: CC-BY-SA (see the License file)
 
 ### Eagle
-This file is contanoing a PCB with eTextile bus connector - V1
+V1.0 : the Eagle file contain a PCB with eTextile-bus solution (not available as market product)
 
-### KiCad 
-the textile bus systhem is not a maket productso I switch to the - V2
+### KiCad
+V2.0 : the KiCad file contain a PCB that avoid the need of eTextile-bus
 
