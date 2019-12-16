@@ -8,5 +8,5 @@ Software/openFrameworks/openFrameworks.xcodeproj/xcshareddata/xcschemes/openFram
 Software/openFrameworks/openFrameworks.xcodeproj/xcshareddata/xcschemes/openFrameworks Release.xcscheme
 Software/openFrameworks/openFrameworks.xcodeproj/xcuserdata/antoine.xcuserdatad/xcschemes/xcschememanagement.plist
 Software/openFrameworks/openFrameworks.xcodeproj/project.pbxproj
-Hardware_electronic/kicad/E256_teensy3_2/sym-lib-table
-Hardware_electronic/kicad/E256_teensy4_0/sym-lib-table
+Hardware_electronic/kicad/e256_teensy3_2/sym-lib-table
+Hardware_electronic/kicad/e256_teensy4_0/sym-lib-table
