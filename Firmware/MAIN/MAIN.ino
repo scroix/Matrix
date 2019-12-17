@@ -83,8 +83,8 @@ void setup() {
   //pinMode(BUTTON_PIN, INPUT_PULLUP);          // Set button pin as input and activate the input pullup resistor // FIXME - NO BUTTON_PIN ON the E256!
   //attachInterrupt(BUTTON_PIN, calib, RISING); // Attach interrrupt on button PIN // FIXME - NO BUTTON_PIN ON the E256
 
-  //ADC_SETUP();
-
+  ADC_SETUP(); // set to 8bits
+  
   for (int i = 0; i < RAW_ROWS; i++) {
     pinMode(rowPins[i], OUTPUT);
   }
@@ -228,6 +228,7 @@ void loop() {
 
 void ADC_SETUP(void) {
   // TODO: set all ADC to 8 bits
+  analogReadRes(8);
 }
 
 // Columns are digital OUTPUT PINS - We supply them one by one sequentially
@@ -239,13 +240,8 @@ void matrix_scan(uint8_t* outputFrame) {
     digitalWrite(rowPins[row], HIGH);
     for (int column = 0; column < RAW_COLS; column++) {
 
-      int adcVal = analogRead(columnPins[column]); // Read the sensor value -> TODO: set all ADC to 8 bits
-
+      uint8_t adcVal = analogRead(columnPins[column]);
       int sensorIndex = row * RAW_ROWS + column; // Calculate the index of the unidimensional array
-
-      adcVal = map(adcVal, minValsArray[sensorIndex], 1023, 0, 255);
-      adcVal = constrain(adcVal, 0, 255);
-
       int sensorVal = adcVal - minValsArray[sensorIndex];
       sensorVal > 0 ? outputFrame[sensorIndex] = (uint8_t)sensorVal : outputFrame[sensorIndex] = 0;
     }
@@ -268,7 +264,7 @@ void matrix_calibrate(uint8_t* outputFrame) {
       // Set row pin as output + 3.3V
       digitalWrite(rowPins[row], HIGH);
       for (int column = 0; column < RAW_COLS; column++) {
-        int adcVal = analogRead(columnPins[column]); // Read the sensor value -> TODO: set all ADC to 8 bits
+        uint8_t adcVal = analogRead(columnPins[column]); // Read the sensor value -> TODO: set all ADC to 8 bits
         int sensorIndex = row * RAW_ROWS + column; // Calculate the index of the unidimensional array
         if (adcVal > outputFrame[sensorIndex]) outputFrame[sensorIndex] = adcVal;
       }
