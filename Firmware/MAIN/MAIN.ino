@@ -12,13 +12,9 @@
 //    .. FPS : ADC_INPUT / BILINEAR_INTERPOLATION
 //    39 FPS : ADC_INPUT / BILINEAR_INTERPOLATION / BLOB_TRACKING
 
-#include <SPI.h>                    // https://www.pjrc.com/teensy/td_libs_SPI.html
-#include <ADC.h>                    // https://github.com/pedvide/ADC
-
-#include <OSCBoards.h>              // https://github.com/CNMAT/OSC
-#include <OSCMessage.h>             // https://github.com/CNMAT/OSC
-#include <OSCBundle.h>              // https://github.com/CNMAT/OSC
-#include <SLIPEncodedUSBSerial.h>   // https://github.com/CNMAT/OSC
+#include <SPI.h>        // https://www.pjrc.com/teensy/td_libs_SPI.html
+#include <ADC.h>        // https://github.com/pedvide/ADC
+#include <MIDI.h>       // http://www.pjrc.com/teensy/td_midi.html
 
 #include "config.h"
 #include "interp.h"
@@ -56,8 +52,6 @@ llist_t  blobs_stack;        // Blobs free nodes linked list
 llist_t  blobs;              // Intermediate blobs linked list
 llist_t  outputBlobs;        // Output blobs linked list
 
-SLIPEncodedUSBSerial SLIPSerial(thisBoardsSerialUSB);
-
 uint8_t threshold = 20;
 uint8_t calibration_cycles = 20;
 boolean calibrate = true;
@@ -66,21 +60,6 @@ void setup() {
 
   //pinMode(LED_BUILTIN, OUTPUT);   // FIXME - BUILTIN_LED is used for SPI hardware
   //digitalWrite(LED_BUILTIN, LOW); // FIXME - BUILTIN_LED is used for SPI hardware
-
-#ifdef DEBUG_ADC
-#ifdef DEBUG_INTERP
-#ifdef DEBUG_BLOBS_OSC
-#ifdef DEBUG_SFF_BITMAP
-#ifdef DEBUG_FPS
-  Serial.begin(BAUD_RATE);       // Arduino serial library ** 230400 **
-  while (!Serial.dtr());         // Wait for user to start the serial monitor
-#else
-  SLIPSerial.begin(BAUD_RATE);   // Arduino serial library ** 230400 ** extended with SLIP encoding
-#endif /*__DEBUG_ADC__*/
-#endif /*__DEBUG_INTERP__*/
-#endif /*__DEBUG_BLOBS_OSC__*/
-#endif /*__DEBUG_SFF_BITMAP__*/
-#endif /*__DEBUG_FPS__*/
 
   //pinMode(BUTTON_PIN, INPUT_PULLUP);          // Set button pin as input and activate the input pullup resistor // FIXME - NO BUTTON_PIN ON the E256!
   //attachInterrupt(BUTTON_PIN, calib, RISING); // Attach interrrupt on button PIN // FIXME - NO BUTTON_PIN ON the E256
@@ -109,28 +88,15 @@ void setup() {
     &blobArray[0],        // blob_t*
     &outputBlobs          // list_t*
   );
+  usbMIDI.begin();
 }
 
 //////////////////// LOOP
 void loop() {
 
-  OSCMessage OSCmsg;
+  matrix_blobs_get();
 
-  int size;
-  while (!SLIPSerial.endofPacket()) {
-    if ((size = SLIPSerial.available()) > 0) {
-      while (size--)
-        OSCmsg.fill(SLIPSerial.read());
-    }
-  }
-  if (!OSCmsg.hasError()) {
-    OSCmsg.dispatch("/c", matrix_calibration_set);
-    OSCmsg.dispatch("/t", matrix_threshold_set);
-    OSCmsg.dispatch("/r", matrix_raw_data_get);
-    OSCmsg.dispatch("/i", matrix_interp_data_get);
-    OSCmsg.dispatch("/x", matrix_interp_data_bin_get);
-    OSCmsg.dispatch("/b", matrix_blobs_get_OSC);
-  }
+  while (usbMIDI.read()); // Read and discard any incoming MIDI messages
 
 #ifdef DEBUG_ADC
   matrix_scan(&frameArray[0]);
@@ -207,9 +173,9 @@ void loop() {
     Serial.print(" ");
     Serial.print (blob->alive);      // uint8_t
     Serial.print(" ");
-    Serial.print (blob->centroid.X); // uint8_t
+    Serial.print (blob->centroid.X); // int8_t
     Serial.print(" ");
-    Serial.print (blob->centroid.Y); // uint8_t
+    Serial.print (blob->centroid.Y); // int8_t
     Serial.print(" ");
     Serial.print (blob->box.W);      // uint8_t
     Serial.print(" ");
@@ -248,7 +214,7 @@ void ADC_SETUP(void) {
   //adc->adc0->setConversionSpeed(ADC_CONVERSION_SPEED::HIGH_SPEED);    // Change the conversion speed
   adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);     // Change the sampling speed
   //adc->adc0->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED);        // Change the sampling speed
-  //adc->adc0->enableCompare(1.0 / 3.3 * adc->adc0->getMaxValue(), 0);   // Measurement will be ready if value < 1.0V
+  //adc->adc0->enableCompare(1.0 / 3.3 * adc->adc0->getMaxValue(), 0);  // Measurement will be ready if value < 1.0V
 
   adc->adc1->setAveraging(1);                                           // Set number of averages
   adc->adc1->setResolution(8);                                          // Set bits of resolution
@@ -256,7 +222,7 @@ void ADC_SETUP(void) {
   // adc->adc1->setConversionSpeed(ADC_CONVERSION_SPEED::HIGH_SPEED);   // Change the conversion speed
   adc->adc1->setSamplingSpeed(ADC_SAMPLING_SPEED::VERY_HIGH_SPEED);     // Change the sampling speed
   //adc->adc1->setSamplingSpeed(ADC_SAMPLING_SPEED::HIGH_SPEED);        // Change the sampling speed
-  //adc->adc1->enableCompare(1.0 / 3.3 * adc->adc1->getMaxValue(), 0);   // Measurement will be ready if value < 1.0V
+  //adc->adc1->enableCompare(1.0 / 3.3 * adc->adc1->getMaxValue(), 0);  // Measurement will be ready if value < 1.0V
 }
 
 // Columns are digital OUTPUT PINS - We supply them one by one sequentially
@@ -265,7 +231,7 @@ void matrix_scan(uint8_t* outputFrame) {
 
   uint32_t setCols = 0x10000;
 
-  for (uint8_t col = 0; col < RAW_COLS; col++) {        // 0 to 15
+  for (uint8_t col = 0; col < RAW_COLS; col++) {    // 0 to 15
     setCols = setCols >> 1;
     for (uint8_t row = 0; row < DUAL_ROWS; row++) { // 0 to 7
 
@@ -289,8 +255,7 @@ void matrix_scan(uint8_t* outputFrame) {
   }
 }
 
-void matrix_calibration_set(OSCMessage & msg) {
-  calibration_cycles = msg.getInt(0) & 0xFF;   // Get the first uint8_t in an int32_t
+void matrix_calibration_set() {
   calibrate = true;
 }
 
@@ -329,59 +294,11 @@ void matrix_calibrate(uint8_t* outputFrame) {
 }
 
 // Set the threshold
-void matrix_threshold_set(OSCMessage & msg) {
-  threshold = msg.getInt(0) & 0xFF; // Get the first uint8_t of the int32_t
+void matrix_threshold_set() {
+  //threshold = msg.getInt(0) & 0xFF; // Get the first uint8_t of the int32_t
 }
 
-// Send raw frame values in SLIP-OSC formmat
-void matrix_raw_data_get(OSCMessage & msg) {
-
-  if (calibrate) matrix_calibrate(&minValsArray[0]);
-  matrix_scan(&frameArray[0]);
-  OSCMessage m("/r");
-  m.add(frameArray, RAW_FRAME);
-  SLIPSerial.beginPacket();
-  m.send(SLIPSerial);        // Send the bytes to the SLIP stream
-  SLIPSerial.endPacket();    // Mark the end of the OSC Packet
-}
-
-// Send interpolated frame values in SLIP-OSC formmat
-void matrix_interp_data_get(OSCMessage & msg) {
-
-  if (calibrate) matrix_calibrate(&minValsArray[0]);
-  matrix_scan(&frameArray[0]);
-  matrix_interp(&interpolatedFrame, &inputFrame, &interp);
-  OSCMessage m("/i");
-  m.add(interpFrameArray, NEW_FRAME);
-  SLIPSerial.beginPacket();
-  m.send(SLIPSerial);        // Send the bytes to the SLIP stream
-  SLIPSerial.endPacket();    // Mark the end of the OSC Packet
-}
-
-// Send interpolated frame values in SLIP-OSC formmat
-void matrix_interp_data_bin_get(OSCMessage & msg) {
-
-  if (calibrate) matrix_calibrate(&minValsArray[0]);
-  matrix_scan(&frameArray[0]);
-  matrix_interp(&interpolatedFrame, &inputFrame, &interp);
-  find_blobs(
-    threshold,          // uint8_t
-    &interpolatedFrame, // image_t (uint8_t array[NEW_FRAME] - 64*64 1D array)
-    &bitmap,            // image_t (uint8_t array[NEW_FRAME] - 64*64 1D array)
-    &lifo_stack,        // lifo_t
-    &lifo,              // lifo_t
-    &blobs_stack,       // list_t
-    &blobs,             // list_t
-    &outputBlobs        // list_t
-  );
-  OSCMessage m("/x");
-  m.add(&bitmapArray[0], RAW_FRAME);
-  SLIPSerial.beginPacket();
-  m.send(SLIPSerial);        // Send the bytes to the SLIP stream
-  SLIPSerial.endPacket();    // Mark the end of the OSC Packet
-}
-
-void matrix_blobs_get_OSC(OSCMessage & msg) {
+void matrix_blobs_get() {
 
   if (calibrate) matrix_calibrate(&minValsArray[0]);
   matrix_scan(&frameArray[0]);
@@ -397,23 +314,30 @@ void matrix_blobs_get_OSC(OSCMessage & msg) {
     &outputBlobs        // list_t
   );
 
-  OSCBundle OSCbundle;
-
-  // Send all blobs in OCS bundle
+  // Send all blobs in MIDI format
+  // usbMIDI.sendControlChange(control, value, channel);
+  int pos = 0;
   for (blob_t* blob = ITERATOR_START_FROM_HEAD(&outputBlobs); blob != NULL; blob = ITERATOR_NEXT(blob)) {
-    blobPacket[0] = blob->UID;        // uint8_t unique session ID
-    blobPacket[1] = blob->alive;      // uint8_t
-    blobPacket[2] = blob->centroid.X; // uint8_t
-    blobPacket[3] = blob->centroid.Y; // uint8_t
-    blobPacket[4] = blob->box.W;      // uint8_t
-    blobPacket[5] = blob->box.H;      // uint8_t
-    blobPacket[6] = blob->box.D;      // uint8_t
 
-    OSCMessage msg("/b");
-    msg.add(blobPacket, BLOB_PACKET_SIZE);
-    OSCbundle.add(msg);
+    pos = blob->UID * 10;
+    
+    if (blob->alive == 1) {
+      //usbMIDI.sendControlChange(1 + pos, blob->UID,      1); //
+      usbMIDI.sendControlChange(0 + pos, blob->alive,      1); //
+      usbMIDI.sendControlChange(1 + pos, blob->centroid.X, 1); //
+      usbMIDI.sendControlChange(2 + pos, blob->centroid.Y, 1); //
+      usbMIDI.sendControlChange(3 + pos, blob->box.W,      1); //
+      usbMIDI.sendControlChange(4 + pos, blob->box.H,      1); //
+      usbMIDI.sendControlChange(5 + pos, blob->box.D >> 1, 1); //
+    }
+    else {
+      //usbMIDI.sendControlChange(1 + pos, 0, 1); //
+      usbMIDI.sendControlChange(0 + pos, 0, 1);   //
+      usbMIDI.sendControlChange(1 + pos, 0, 1);   //
+      usbMIDI.sendControlChange(2 + pos, 0, 1);   //
+      usbMIDI.sendControlChange(3 + pos, 0, 1);   //
+      usbMIDI.sendControlChange(4 + pos, 0, 1);   //
+      usbMIDI.sendControlChange(5 + pos, 0, 1);   //
+    }
   }
-  SLIPSerial.beginPacket();     //
-  OSCbundle.send(SLIPSerial);   // Send the bytes to the SLIP stream
-  SLIPSerial.endPacket();       // Mark the end of the OSC Packet
 }

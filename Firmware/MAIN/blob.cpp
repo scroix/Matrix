@@ -222,8 +222,8 @@ void find_blobs(
           blob_t* blob = llist_pop_front(blobs_stack_ptr);
           blob_raz(blob);
 
-          blob->centroid.X = (uint8_t)round(blob_cx / ((float) blob_pixels));
-          blob->centroid.Y = (uint8_t)round(blob_cy / ((float) blob_pixels));
+          blob->centroid.X = (int8_t)round(blob_cx / ((float) blob_pixels));
+          blob->centroid.Y = (int8_t)round(blob_cy / ((float) blob_pixels));
 
           blob->box.W = (blob_x2 - blob_x1);
           blob->box.H = blob_height;

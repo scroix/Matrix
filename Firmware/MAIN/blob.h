@@ -101,8 +101,8 @@ typedef struct image {
 void bitmap_clear(image_t* bitmap_ptr);
 
 typedef struct {
-  uint8_t X;
-  uint8_t Y;
+  int8_t X;
+  int8_t Y;
 } point_t;
 
 typedef struct {

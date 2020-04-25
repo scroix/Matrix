@@ -15,7 +15,7 @@
 //#define E256_X0 -1        // TODO: select X-axis origine [-1:1]
 //#define E256_Y0 -1        // TODO: select Y-axis origine [-1:1]
 
-#define E256_SLIP_OSC
+#define E256_MIDI
 
 //#define DEBUG_ADC
 //#define DEBUG_INTERP
@@ -28,7 +28,7 @@
 //#define BUTTON_PIN          32        // FIXME - NO BUTTON_PIN on the E256
 
 //#define BAUD_RATE           115200
-#define BAUD_RATE             230400
+//#define BAUD_RATE           230400
 #define RAW_COLS              16
 #define RAW_ROWS              16
 #define DUAL_ROWS             (RAW_ROWS / 2)
